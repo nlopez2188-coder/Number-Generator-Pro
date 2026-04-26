@@ -1,0 +1,10 @@
+{
+  "name": "Number Generator Pro",
+  "description": "An interactive number exploration game featuring mathematical clubs, voice synthesis, and advanced controls for numbers up to 1 trillion.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "voice-synthesis",
+    "large-number-support",
+    "mathematical-clubs"
+  ]
+}
