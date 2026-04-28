@@ -170,7 +170,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="font-bold text-xl tracking-tight">Number Generator</h1>
-            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.5.0</p>
+            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.4.0</p>
           </div>
         </div>
 
@@ -237,10 +237,10 @@ export default function App() {
           <TrendingDown className="text-slate-500 w-5 h-5 flex-shrink-0" />
           <input 
             type="range"
-            min="-1000"
-            max="1000"
+            min="-9"
+            max="1000000"
             value={number}
-            onChange={(e) => setNumber(parseInt(e.target.value))}
+            onChange={(e) => setNumber(parseFloat(e.target.value))}
             className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-green-500"
           />
           <TrendingUp className="text-slate-500 w-5 h-5 flex-shrink-0" />
