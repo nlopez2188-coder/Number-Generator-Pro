@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import Decimal from 'decimal.js';
 import { 
   Menu, 
   ChevronLeft, 
@@ -19,19 +20,22 @@ import {
   Zap,
   TrendingUp,
   TrendingDown,
-  Hash
+  Hash,
+  Activity,
+  Calculator
 } from 'lucide-react';
-import { getClubs, getNumberInfo } from './utils/number-logic';
+import { getClubs, getNumberInfo, formatDecimal } from './utils/number-logic';
 
 export default function App() {
-  const [number, setNumber] = useState(0);
+  const [number, setNumber] = useState(new Decimal(0));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'controls' | 'clubs' | 'info'>('controls');
   const [page, setPage] = useState(0);
   const [showClubs, setShowClubs] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [isAutoCounting, setIsAutoCounting] = useState(false);
-  const [autoCountAmount, setAutoCountAmount] = useState(1);
+  const [autoCountAmount, setAutoCountAmount] = useState(new Decimal(1));
+  const [isExponentialMode, setIsExponentialMode] = useState(false);
 
   // Auto-counting logic
   useEffect(() => {
@@ -39,8 +43,8 @@ export default function App() {
     if (isAutoCounting) {
       interval = setInterval(() => {
         setNumber(prev => {
-          const next = Math.round((prev + autoCountAmount) * 1000) / 1000;
-          if (Math.abs(next) > 1000000000000) {
+          const next = prev.add(autoCountAmount);
+          if (next.abs().gt('1e3003')) {
             setIsAutoCounting(false);
             return prev;
           }
@@ -68,40 +72,48 @@ export default function App() {
   const speakNumber = useCallback(() => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const text = number === 0 ? "Zero" : number.toLocaleString();
+      const text = number.isZero() ? "Zero" : formatDecimal(number);
       const utterance = new SpeechSynthesisUtterance(text);
       if (voice) utterance.voice = voice;
       utterance.rate = 1.0;
-      utterance.pitch = 1.2;
+      utterance.pitch = 1.1;
       window.speechSynthesis.speak(utterance);
     }
   }, [number, voice]);
 
-  const changeNumber = (delta: number) => {
+  const changeNumber = (delta: number | Decimal | string) => {
     setNumber(prev => {
-      const next = Math.round((prev + delta) * 1000) / 1000; // Round to avoid floating point issues
-      if (Math.abs(next) > 1000000000000) return prev;
+      const next = prev.add(delta);
+      if (next.abs().gt('1e3003')) return prev;
       return next;
     });
   };
 
   const setManualNumber = () => {
-    const val = prompt("Enter a number (up to 1,000,000,000,000):");
+    const val = prompt("Enter a number (up to 1e3003):");
     if (val !== null) {
-      const n = parseInt(val.replace(/,/g, ''));
-      if (!isNaN(n) && Math.abs(n) <= 1000000000000) {
-        setNumber(n);
-      } else {
-        alert("Invalid number! Please enter a value between -1T and 1T.");
+      try {
+        const n = new Decimal(val.replace(/,/g, ''));
+        if (n.abs().lte('1e3003')) {
+          setNumber(n);
+        } else {
+          alert("Value exceeds the laboratory limit of 1e3003!");
+        }
+      } catch (e) {
+        alert("Invalid laboratory input!");
       }
     }
   };
 
   const customIncrement = () => {
-    const val = prompt("Enter value to add/subtract:");
+    const val = prompt("Enter value to add/subtract (scientific notation ok):");
     if (val !== null) {
-      const n = parseFloat(val.replace(/,/g, ''));
-      if (!isNaN(n)) changeNumber(n);
+      try {
+        const n = new Decimal(val.replace(/,/g, ''));
+        changeNumber(n);
+      } catch (e) {
+        alert("Invalid laboratory input!");
+      }
     }
   };
 
@@ -111,10 +123,12 @@ export default function App() {
     } else {
       const val = prompt("Enter amount to count by every second:");
       if (val !== null) {
-        const n = parseFloat(val.replace(/,/g, ''));
-        if (!isNaN(n)) {
+        try {
+          const n = new Decimal(val.replace(/,/g, ''));
           setAutoCountAmount(n);
           setIsAutoCounting(true);
+        } catch (e) {
+          alert("Invalid laboratory input!");
         }
       }
     }
@@ -127,22 +141,24 @@ export default function App() {
   const buttonPages = [
     // Page 1: Integer Increments
     [
-      { label: "+1", val: 1 }, { label: "+10", val: 10 }, { label: "+100", val: 100 }, { label: "+1K", val: 1000 },
-      { label: "-1", val: -1 }, { label: "-10", val: -10 }, { label: "-100", val: -100 }, { label: "-1K", val: -1000 },
-      { label: "+1M", val: 1000000 }, { label: "+1B", val: 1000000000 }, { label: "+10B", val: 10000000000 }, { label: "+1T", val: 1000000000000 },
+      { label: "+1", val: 1 }, { label: "+10", val: 10 }, { label: "+1K", val: 1000 }, { label: "+1M", val: 1000000 },
+      { label: "-1", val: -1 }, { label: "-10", val: -10 }, { label: "-1K", val: -1000 }, { label: "-1M", val: -1000000 },
+      { label: "x10", action: () => setNumber(prev => prev.mul(10)), icon: <TrendingUp className="w-4 h-4 text-orange-400" /> },
+      { label: "x10^10", action: () => setNumber(prev => prev.mul('1e10')), icon: <Activity className="w-4 h-4 text-orange-500" /> },
+      { label: "^2", action: () => setNumber(prev => prev.pow(2)), icon: <Zap className="w-4 h-4 text-yellow-400" /> },
+      { label: "RESET", action: () => { setNumber(new Decimal(0)); setIsAutoCounting(false); }, icon: <RotateCcw className="w-4 h-4" /> },
     ],
-    // Page 2: Fractional/Time Increments (as requested: 1/60, 1/2)
-    // For these, I'll multiply by a factor or just use decimals. 
-    // Usually these games treat 1 as a "whole", so 1/60 might be 0.0166...
+    // Page 2: Astronomical Scales
     [
-      { label: "+1/60", val: 1/60 }, { label: "+1/2", val: 0.5 }, { label: "+0.1", val: 0.1 }, { label: "+0.01", val: 0.01 },
-      { label: "-1/60", val: -1/60 }, { label: "-1/2", val: -0.5 }, { label: "-0.1", val: -0.1 }, { label: "-0.01", val: -0.01 },
-      { label: "+5", val: 5 }, { label: "+25", val: 25 }, { label: "+50", val: 50 }, { label: "-50", val: -50 },
+      { label: "+1G", val: '1e100' }, { label: "+1GP", val: '1e308' }, { label: "+1INF", val: '1e1000' }, { label: "+1E", val: '1e3003' },
+      { label: "/10", action: () => setNumber(prev => prev.div(10)), icon: <TrendingDown className="w-4 h-4 text-blue-400" /> },
+      { label: "/1G", action: () => setNumber(prev => prev.div('1e100')), icon: <Activity className="w-4 h-4 text-blue-500" /> },
+      { label: "SQRT", action: () => setNumber(prev => prev.sqrt()), icon: <Calculator className="w-4 h-4 text-cyan-400" /> },
+      { label: "EXP", action: () => setIsExponentialMode(!isExponentialMode), icon: <Activity className="w-4 h-4" />, status: isExponentialMode },
     ],
     // Page 3: Special Actions
     [
       { label: "SET", action: setManualNumber, icon: <Target className="w-4 h-4" /> },
-      { label: "RESET", action: () => { setNumber(0); setIsAutoCounting(false); }, icon: <RotateCcw className="w-4 h-4" /> },
       { label: "+X", action: customIncrement, icon: <PlusXIcon /> },
       { label: "AUTO", action: toggleAuto, icon: <Zap className="w-4 h-4" />, status: isAutoCounting },
       { label: "SAY", action: speakNumber, icon: <Volume2 className="w-4 h-4" /> },
@@ -170,7 +186,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="font-bold text-xl tracking-tight">Number Generator</h1>
-            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.4.0</p>
+            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.5.0</p>
           </div>
         </div>
 
@@ -201,8 +217,8 @@ export default function App() {
             className="flex flex-col items-center"
           >
             <div className="relative">
-              <span className="text-[12vw] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-slate-500 drop-shadow-2xl">
-                {number.toLocaleString()}
+              <span className={`font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-slate-500 drop-shadow-2xl transition-all ${isExponentialMode || number.abs().gte(1e9) ? 'text-[8vw]' : 'text-[12vw]'}`}>
+                {isExponentialMode ? number.toExponential(4) : formatDecimal(number)}
               </span>
               
               {/* Number decorations based on clubs */}
@@ -239,8 +255,9 @@ export default function App() {
             type="range"
             min="-9"
             max="1000000"
-            value={number}
-            onChange={(e) => setNumber(parseFloat(e.target.value))}
+            step="1"
+            value={number.clamp(-9, 1000000).toNumber()}
+            onChange={(e) => setNumber(new Decimal(e.target.value))}
             className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-green-500"
           />
           <TrendingUp className="text-slate-500 w-5 h-5 flex-shrink-0" />
@@ -373,12 +390,12 @@ export default function App() {
 
                       <div className="space-y-3">
                         <div className="flex justify-between p-4 bg-slate-800/50 rounded-xl text-xs uppercase tracking-wider font-bold text-slate-400">
-                          <span>Abs Value</span>
-                          <span>{Math.abs(number)}</span>
+                          <span>Value</span>
+                          <span>{number.toSignificantDigits(10).toString()}</span>
                         </div>
                         <div className="flex justify-between p-4 bg-slate-800/50 rounded-xl text-xs uppercase tracking-wider font-bold text-slate-400">
                           <span>Sign</span>
-                          <span>{number > 0 ? "Positive" : number < 0 ? "Negative" : "Neutral"}</span>
+                          <span>{number.isPositive() ? "Positive" : number.isNegative() ? "Negative" : "Neutral"}</span>
                         </div>
                       </div>
                     </motion.div>
@@ -430,6 +447,8 @@ function getClubColor(club: string) {
   if (club.includes("Prime")) return "bg-green-400";
   if (club.includes("Step")) return "bg-orange-400";
   if (club.includes("Lucky")) return "bg-indigo-400";
+  if (club.includes("Infinity")) return "bg-red-500";
+  if (club.includes("Googol")) return "bg-cyan-400";
   return "bg-slate-400";
 }
 
@@ -441,6 +460,8 @@ function getClubBgColor(club: string) {
   if (club.includes("Prime")) return "bg-green-400/20 text-green-400";
   if (club.includes("Step")) return "bg-orange-400/20 text-orange-400";
   if (club.includes("Lucky")) return "bg-indigo-400/20 text-indigo-400";
+  if (club.includes("Infinity")) return "bg-red-400/20 text-red-400";
+  if (club.includes("Googol")) return "bg-cyan-400/20 text-cyan-400";
   return "bg-slate-400/20 text-slate-400";
 }
 
@@ -466,6 +487,10 @@ function getClubDescription(club: string) {
     case "Giant Club": return "Numbers that have reached massive proportions.";
     case "Titan Club": return "Numbers so large they challenge the imagination!";
     case "Universal Club": return "Truly astronomical. Reaching towards infinity!";
+    case "Googol Club": return "The famous Googol. 1 with 100 zeros!";
+    case "Googolplexian Club": return "Surpassing logical limits. Beyond 10^308.";
+    case "Multiversal Club": return "Large enough to describe the states of multiple universes.";
+    case "Infinity Bound": return "The Laboratory Limit. Reaching the peak of power!";
     case "Negative Club": return "Living below zero. Cool and collected.";
     case "Zero Club": return "Where everything starts. The identity element.";
     default: return "A special group for special numbers.";
