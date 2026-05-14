@@ -36,6 +36,14 @@ export default function App() {
   const [isAutoCounting, setIsAutoCounting] = useState(false);
   const [autoCountAmount, setAutoCountAmount] = useState(new Decimal(1));
   const [isExponentialMode, setIsExponentialMode] = useState(false);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const audioRef = useCallback((node: HTMLAudioElement) => {
+    if (node) {
+      node.volume = 0.2;
+      if (isMusicPlaying) node.play().catch(() => setIsMusicPlaying(false));
+      else node.pause();
+    }
+  }, [isMusicPlaying]);
 
   // Auto-counting logic
   useEffect(() => {
@@ -44,13 +52,14 @@ export default function App() {
       interval = setInterval(() => {
         setNumber(prev => {
           const next = prev.add(autoCountAmount);
-          if (next.abs().gt('1e3003')) {
+          const limit = isExponentialMode ? new Decimal('1e3003') : new Decimal('1e12');
+          if (next.abs().gt(limit)) {
             setIsAutoCounting(false);
             return prev;
           }
           return next;
         });
-      }, 1000);
+      }, 500);
     }
     return () => clearInterval(interval);
   }, [isAutoCounting, autoCountAmount]);
@@ -84,20 +93,26 @@ export default function App() {
   const changeNumber = (delta: number | Decimal | string) => {
     setNumber(prev => {
       const next = prev.add(delta);
-      if (next.abs().gt('1e3003')) return prev;
+      const limit = isExponentialMode ? new Decimal('1e3003') : new Decimal('1e12');
+      if (next.abs().gt(limit)) {
+        if (!isExponentialMode) alert("Please enable EXP mode to reach higher powers!");
+        return prev;
+      }
       return next;
     });
   };
 
   const setManualNumber = () => {
-    const val = prompt("Enter a number (up to 1e3003):");
+    const limitStr = isExponentialMode ? "1e3003" : "1,000,000,000,000";
+    const val = prompt(`Enter a number (up to ${limitStr}):`);
     if (val !== null) {
       try {
         const n = new Decimal(val.replace(/,/g, ''));
-        if (n.abs().lte('1e3003')) {
+        const limit = isExponentialMode ? new Decimal('1e3003') : new Decimal('1e12');
+        if (n.abs().lte(limit)) {
           setNumber(n);
         } else {
-          alert("Value exceeds the laboratory limit of 1e3003!");
+          alert(`Value exceeds the ${isExponentialMode ? 'Laboratory' : 'Standard'} limit! ${!isExponentialMode ? 'Enable EXP mode for more power.' : ''}`);
         }
       } catch (e) {
         alert("Invalid laboratory input!");
@@ -139,29 +154,28 @@ export default function App() {
 
   // Pagination for buttons
   const buttonPages = [
-    // Page 1: Integer Increments
+    // Page 1: Primary Controls
     [
-      { label: "+1", val: 1 }, { label: "+10", val: 10 }, { label: "+1K", val: 1000 }, { label: "+1M", val: 1000000 },
-      { label: "-1", val: -1 }, { label: "-10", val: -10 }, { label: "-1K", val: -1000 }, { label: "-1M", val: -1000000 },
+      { label: "+1", val: 1 }, { label: "+10", val: 10 }, { label: "+1K", val: 1000 }, { label: "AUTO", action: toggleAuto, icon: <Zap className="w-4 h-4" />, status: isAutoCounting },
+      { label: "-1", val: -1 }, { label: "-10", val: -10 }, { label: "-1K", val: -1000 }, { label: "EXP", action: () => setIsExponentialMode(!isExponentialMode), icon: <Activity className="w-4 h-4" />, status: isExponentialMode },
       { label: "x10", action: () => setNumber(prev => prev.mul(10)), icon: <TrendingUp className="w-4 h-4 text-orange-400" /> },
-      { label: "x10^10", action: () => setNumber(prev => prev.mul('1e10')), icon: <Activity className="w-4 h-4 text-orange-500" /> },
-      { label: "^2", action: () => setNumber(prev => prev.pow(2)), icon: <Zap className="w-4 h-4 text-yellow-400" /> },
       { label: "RESET", action: () => { setNumber(new Decimal(0)); setIsAutoCounting(false); }, icon: <RotateCcw className="w-4 h-4" /> },
+      { label: "^2", action: () => setNumber(prev => prev.pow(2)), icon: <Zap className="w-4 h-4 text-yellow-400" /> },
+      { label: "MUSIC", action: () => setIsMusicPlaying(!isMusicPlaying), icon: <Volume2 className={`w-4 h-4 ${isMusicPlaying ? 'text-green-400 animate-pulse' : 'text-slate-400'}`} />, status: isMusicPlaying },
     ],
     // Page 2: Astronomical Scales
     [
-      { label: "+1G", val: '1e100' }, { label: "+1GP", val: '1e308' }, { label: "+1INF", val: '1e1000' }, { label: "+1E", val: '1e3003' },
-      { label: "/10", action: () => setNumber(prev => prev.div(10)), icon: <TrendingDown className="w-4 h-4 text-blue-400" /> },
-      { label: "/1G", action: () => setNumber(prev => prev.div('1e100')), icon: <Activity className="w-4 h-4 text-blue-500" /> },
+      { label: "+1M", val: 1000000 }, { label: "+1B", val: 1000000000 }, { label: "+1G", val: '1e100' }, { label: "+1E", val: '1e3003' },
+      { label: "-1M", val: -1000000 }, { label: "/10", action: () => setNumber(prev => prev.div(10)), icon: <TrendingDown className="w-4 h-4 text-blue-400" /> },
       { label: "SQRT", action: () => setNumber(prev => prev.sqrt()), icon: <Calculator className="w-4 h-4 text-cyan-400" /> },
-      { label: "EXP", action: () => setIsExponentialMode(!isExponentialMode), icon: <Activity className="w-4 h-4" />, status: isExponentialMode },
+      { label: "/1G", action: () => setNumber(prev => prev.div('1e100')), icon: <Activity className="w-4 h-4 text-blue-500" /> },
+      { label: "x10^10", action: () => setNumber(prev => prev.mul('1e10')), icon: <Activity className="w-4 h-4 text-orange-500" /> },
+      { label: "+1GP", val: '1e308' }, { label: "+1INF", val: '1e1000' }, { label: "SAY", action: speakNumber, icon: <Volume2 className="w-4 h-4" /> },
     ],
-    // Page 3: Special Actions
+    // Page 3: Special Tools
     [
       { label: "SET", action: setManualNumber, icon: <Target className="w-4 h-4" /> },
       { label: "+X", action: customIncrement, icon: <PlusXIcon /> },
-      { label: "AUTO", action: toggleAuto, icon: <Zap className="w-4 h-4" />, status: isAutoCounting },
-      { label: "SAY", action: speakNumber, icon: <Volume2 className="w-4 h-4" /> },
       { label: "CLUBS", action: () => setShowClubs(!showClubs), icon: <GroupsIcon />, status: showClubs },
       { label: "INFO", action: () => setShowInfo(!showInfo), icon: <Info className="w-4 h-4" />, status: showInfo },
     ]
@@ -173,6 +187,11 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#0F172A] text-white font-sans overflow-hidden flex flex-col selection:bg-green-500/30">
       {/* Background Ambience */}
+      <audio 
+        ref={audioRef}
+        src="https://assets.mixkit.co/music/preview/mixkit-ethereal-fairy-dust-645.mp3" 
+        loop 
+      />
       <div className="fixed inset-0 pointer-events-none opacity-30">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-500 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500 rounded-full blur-[120px]" />
@@ -186,7 +205,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="font-bold text-xl tracking-tight">Number Generator</h1>
-            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.5.0</p>
+            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.5.0: Popping Powers</p>
           </div>
         </div>
 

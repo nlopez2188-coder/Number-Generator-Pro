@@ -1,6 +1,6 @@
 {
-  "name": "Number Generator Pro (Celestial Edition)",
-  "description": "An interactive number exploration game featuring astronomical scales, mathematical clubs, and power modes up to 10^3003.",
+  "name": "Number Generator Pro: Popping Powers",
+  "description": "Version 1.5 - Popping Powers: Interactive number exploration with astronomical scales up to 10^3003, exponential mode, ambient music, and automatic counting.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "voice-synthesis",

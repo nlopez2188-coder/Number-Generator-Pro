@@ -98,20 +98,28 @@ export function getNumberInfo(nValue: number | string | Decimal): NumberFact {
   
   let description = `Value: ${formatDecimal(n)}. `;
   
-  if (n.isNegative()) description += "It's a negative value, exploring the void below zero. ";
+  if (n.isNegative()) {
+    if (n.abs().gte('1e12')) {
+      description += "A negative colossus, exerting gravitational pull from the anti-universe. ";
+    } else {
+      description += "It exists in the mirror realm, south of zero where values are cool and relative. ";
+    }
+  }
   
   if (clubs.includes("Prime Club")) {
-    description += `It is a Prime Number, a fundamental pillar of mathematics. `;
+    description += `It is a Prime Number, a fundamental atomic building block of mathematics. `;
   } else if (clubs.includes("Rectangle Club")) {
-    description += `It is a Composite Number, divisible and flexible. `;
+    description += `It is a Composite Number, divisible into harmonious geometric patterns. `;
   }
   
   if (clubs.includes("Square Club")) {
-    description += `It's a Square! A perfect geometric alignment. `;
+    description += `It's a Perfect Square! A geometric masterpiece of alignment. `;
   }
   
   if (clubs.includes("Infinity Bound")) {
-    description += `This value is reaching the theoretical limits of our lab's computing power at 10^3003! `;
+    description += `Warning: This value is approaching the theoretical event horizon of our laboratory (10^3003)! `;
+  } else if (clubs.includes("Googol Club")) {
+    description += `You've reached a Googol! This is more than the number of atoms in the observable universe. `;
   }
 
   return {
