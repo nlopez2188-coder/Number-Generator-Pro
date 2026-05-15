@@ -26,6 +26,10 @@ export function getClubs(nValue: number | string | Decimal): string[] {
   // Basic properties (only for numbers within reasonable range for integer checks)
   if (absN.lte(Number.MAX_SAFE_INTEGER)) {
     const num = absN.toNumber();
+    
+    // Nice Club
+    if (num === 69) clubs.push("Nice Club");
+
     if (num % 2 === 0) clubs.push("Even Club");
     else clubs.push("Odd Club");
     
@@ -114,6 +118,10 @@ export function getNumberInfo(nValue: number | string | Decimal): NumberFact {
   
   if (clubs.includes("Square Club")) {
     description += `It's a Perfect Square! A geometric masterpiece of alignment. `;
+  }
+
+  if (clubs.includes("Nice Club")) {
+    description += `Nice. `;
   }
   
   if (clubs.includes("Infinity Bound")) {

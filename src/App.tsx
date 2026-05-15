@@ -205,7 +205,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="font-bold text-xl tracking-tight">Number Generator</h1>
-            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.5.0: Popping Powers</p>
+            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.5.0a: Popping Powers</p>
           </div>
         </div>
 
@@ -466,6 +466,7 @@ function getClubColor(club: string) {
   if (club.includes("Prime")) return "bg-green-400";
   if (club.includes("Step")) return "bg-orange-400";
   if (club.includes("Lucky")) return "bg-indigo-400";
+  if (club.includes("Nice")) return "bg-green-500 animate-pulse";
   if (club.includes("Infinity")) return "bg-red-500";
   if (club.includes("Googol")) return "bg-cyan-400";
   return "bg-slate-400";
@@ -479,6 +480,7 @@ function getClubBgColor(club: string) {
   if (club.includes("Prime")) return "bg-green-400/20 text-green-400";
   if (club.includes("Step")) return "bg-orange-400/20 text-orange-400";
   if (club.includes("Lucky")) return "bg-indigo-400/20 text-indigo-400";
+  if (club.includes("Nice")) return "bg-green-500/20 text-green-400 border border-green-500/50";
   if (club.includes("Infinity")) return "bg-red-400/20 text-red-400";
   if (club.includes("Googol")) return "bg-cyan-400/20 text-cyan-400";
   return "bg-slate-400/20 text-slate-400";
@@ -488,6 +490,7 @@ function getClubIcon(club: string) {
   if (club.includes("Square")) return <div className="w-6 h-6 border-2 border-current rounded-sm" />;
   if (club.includes("Cube")) return <div className="w-6 h-6 border-2 border-current rounded-sm relative after:absolute after:top-[-4px] after:right-[-4px] after:w-full after:h-full after:border-2 after:border-current after:rounded-sm after:-z-10" />;
   if (club.includes("Prime")) return <Zap className="w-6 h-6" />;
+  if (club.includes("Nice")) return <div className="text-xl font-black italic">69</div>;
   if (club.includes("Step")) return <div className="flex flex-col gap-0.5 items-end"><div className="w-1 h-1 bg-current" /><div className="w-2 h-1 bg-current" /><div className="w-3 h-1 bg-current" /></div>;
   return <Sparkles className="w-6 h-6" />;
 }
@@ -510,6 +513,7 @@ function getClubDescription(club: string) {
     case "Googolplexian Club": return "Surpassing logical limits. Beyond 10^308.";
     case "Multiversal Club": return "Large enough to describe the states of multiple universes.";
     case "Infinity Bound": return "The Laboratory Limit. Reaching the peak of power!";
+    case "Nice Club": return "Sixty-nine. A number of cultural significance and harmony.";
     case "Negative Club": return "Living below zero. Cool and collected.";
     case "Zero Club": return "Where everything starts. The identity element.";
     default: return "A special group for special numbers.";

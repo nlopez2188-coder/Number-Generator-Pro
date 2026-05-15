@@ -1,6 +1,6 @@
 {
   "name": "Number Generator Pro: Popping Powers",
-  "description": "Version 1.5 - Popping Powers: Interactive number exploration with astronomical scales up to 10^3003, exponential mode, ambient music, and automatic counting.",
+  "description": "Version 1.5.0a - Popping Powers: Interactive number exploration with astronomical scales, Nice Club 69, bug fixes, and overhaul.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "voice-synthesis",
