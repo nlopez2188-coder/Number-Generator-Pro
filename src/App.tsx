@@ -24,7 +24,7 @@ import {
   Activity,
   Calculator
 } from 'lucide-react';
-import { getClubs, getNumberInfo, formatDecimal } from './utils/number-logic';
+import { getClubs, getNumberInfo, formatDecimal, formatForSpeech } from './utils/number-logic';
 
 export default function App() {
   const [number, setNumber] = useState(new Decimal(0));
@@ -52,7 +52,7 @@ export default function App() {
       interval = setInterval(() => {
         setNumber(prev => {
           const next = prev.add(autoCountAmount);
-          const limit = isExponentialMode ? new Decimal('1e3003') : new Decimal('1e12');
+          const limit = isExponentialMode ? new Decimal('1e99999') : new Decimal('1e12');
           if (next.abs().gt(limit)) {
             setIsAutoCounting(false);
             return prev;
@@ -81,7 +81,7 @@ export default function App() {
   const speakNumber = useCallback(() => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const text = number.isZero() ? "Zero" : formatDecimal(number);
+      const text = formatForSpeech(number);
       const utterance = new SpeechSynthesisUtterance(text);
       if (voice) utterance.voice = voice;
       utterance.rate = 1.0;
@@ -93,7 +93,7 @@ export default function App() {
   const changeNumber = (delta: number | Decimal | string) => {
     setNumber(prev => {
       const next = prev.add(delta);
-      const limit = isExponentialMode ? new Decimal('1e3003') : new Decimal('1e12');
+      const limit = isExponentialMode ? new Decimal('1e99999') : new Decimal('1e12');
       if (next.abs().gt(limit)) {
         if (!isExponentialMode) alert("Please enable EXP mode to reach higher powers!");
         return prev;
@@ -103,12 +103,12 @@ export default function App() {
   };
 
   const setManualNumber = () => {
-    const limitStr = isExponentialMode ? "1e3003" : "1,000,000,000,000";
+    const limitStr = isExponentialMode ? "1e99999" : "1,000,000,000,000";
     const val = prompt(`Enter a number (up to ${limitStr}):`);
     if (val !== null) {
       try {
         const n = new Decimal(val.replace(/,/g, ''));
-        const limit = isExponentialMode ? new Decimal('1e3003') : new Decimal('1e12');
+        const limit = isExponentialMode ? new Decimal('1e99999') : new Decimal('1e12');
         if (n.abs().lte(limit)) {
           setNumber(n);
         } else {
@@ -136,7 +136,7 @@ export default function App() {
     if (isAutoCounting) {
       setIsAutoCounting(false);
     } else {
-      const val = prompt("Enter amount to count by every second:");
+      const val = prompt("Enter amount to count by every 0.5s (standard or scientific):", "1");
       if (val !== null) {
         try {
           const n = new Decimal(val.replace(/,/g, ''));
@@ -154,28 +154,30 @@ export default function App() {
 
   // Pagination for buttons
   const buttonPages = [
-    // Page 1: Primary Controls
+    // Page 1: Lab Essentials
     [
-      { label: "+1", val: 1 }, { label: "+10", val: 10 }, { label: "+1K", val: 1000 }, { label: "AUTO", action: toggleAuto, icon: <Zap className="w-4 h-4" />, status: isAutoCounting },
-      { label: "-1", val: -1 }, { label: "-10", val: -10 }, { label: "-1K", val: -1000 }, { label: "EXP", action: () => setIsExponentialMode(!isExponentialMode), icon: <Activity className="w-4 h-4" />, status: isExponentialMode },
+      { label: "+1", val: 1 }, { label: "+10", val: 10 }, { label: "+100", val: 100 }, { label: "AUTO", action: toggleAuto, icon: <Zap className="w-4 h-4" />, status: isAutoCounting },
+      { label: "-1", val: -1 }, { label: "-10", val: -10 }, { label: "-100", val: -100 }, { label: "EXP", action: () => setIsExponentialMode(!isExponentialMode), icon: <Activity className="w-4 h-4" />, status: isExponentialMode },
       { label: "x10", action: () => setNumber(prev => prev.mul(10)), icon: <TrendingUp className="w-4 h-4 text-orange-400" /> },
       { label: "RESET", action: () => { setNumber(new Decimal(0)); setIsAutoCounting(false); }, icon: <RotateCcw className="w-4 h-4" /> },
-      { label: "^2", action: () => setNumber(prev => prev.pow(2)), icon: <Zap className="w-4 h-4 text-yellow-400" /> },
       { label: "MUSIC", action: () => setIsMusicPlaying(!isMusicPlaying), icon: <Volume2 className={`w-4 h-4 ${isMusicPlaying ? 'text-green-400 animate-pulse' : 'text-slate-400'}`} />, status: isMusicPlaying },
+      { label: "SAY", action: speakNumber, icon: <Volume2 className="w-4 h-4" /> },
     ],
-    // Page 2: Astronomical Scales
+    // Page 2: Power Lab
     [
-      { label: "+1M", val: 1000000 }, { label: "+1B", val: 1000000000 }, { label: "+1G", val: '1e100' }, { label: "+1E", val: '1e3003' },
-      { label: "-1M", val: -1000000 }, { label: "/10", action: () => setNumber(prev => prev.div(10)), icon: <TrendingDown className="w-4 h-4 text-blue-400" /> },
+      { label: "^2", action: () => setNumber(prev => prev.pow(2)), icon: <Zap className="w-4 h-4 text-yellow-400" /> },
       { label: "SQRT", action: () => setNumber(prev => prev.sqrt()), icon: <Calculator className="w-4 h-4 text-cyan-400" /> },
-      { label: "/1G", action: () => setNumber(prev => prev.div('1e100')), icon: <Activity className="w-4 h-4 text-blue-500" /> },
       { label: "x10^10", action: () => setNumber(prev => prev.mul('1e10')), icon: <Activity className="w-4 h-4 text-orange-500" /> },
-      { label: "+1GP", val: '1e308' }, { label: "+1INF", val: '1e1000' }, { label: "SAY", action: speakNumber, icon: <Volume2 className="w-4 h-4" /> },
-    ],
-    // Page 3: Special Tools
-    [
+      { label: "x10^100", action: () => setNumber(prev => prev.mul('1e100')), icon: <Sparkles className="w-4 h-4" /> },
+      { label: "/10", action: () => setNumber(prev => prev.div(10)), icon: <TrendingDown className="w-4 h-4 text-blue-400" /> },
+      { label: "/10^10", action: () => setNumber(prev => prev.div('1e10')), icon: <TrendingDown className="w-4 h-4 text-blue-600" /> },
+      { label: "1/x", action: () => setNumber(prev => prev.isZero() ? prev : new Decimal(1).div(prev)), icon: <Calculator className="w-4 h-4" /> },
       { label: "SET", action: setManualNumber, icon: <Target className="w-4 h-4" /> },
-      { label: "+X", action: customIncrement, icon: <PlusXIcon /> },
+    ],
+    // Page 3: Astronomical Constants
+    [
+      { label: "1M", val: 1000000 }, { label: "1B", val: 1000000000 }, { label: "1T", val: 1000000000000 }, { label: "P100", val: '1e20' },
+      { label: "1G", val: '1e100' }, { label: "1GP", val: '1e308' }, { label: "1INF", val: '1e1000' }, { label: "MAX", val: '1e99999' },
       { label: "CLUBS", action: () => setShowClubs(!showClubs), icon: <GroupsIcon />, status: showClubs },
       { label: "INFO", action: () => setShowInfo(!showInfo), icon: <Info className="w-4 h-4" />, status: showInfo },
     ]
@@ -205,7 +207,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="font-bold text-xl tracking-tight">Number Generator</h1>
-            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.5.0a: Popping Powers</p>
+            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.5.1: Elongation</p>
           </div>
         </div>
 
@@ -467,8 +469,13 @@ function getClubColor(club: string) {
   if (club.includes("Step")) return "bg-orange-400";
   if (club.includes("Lucky")) return "bg-indigo-400";
   if (club.includes("Nice")) return "bg-green-500 animate-pulse";
-  if (club.includes("Infinity")) return "bg-red-500";
   if (club.includes("Googol")) return "bg-cyan-400";
+  if (club.includes("Yotta")) return "bg-teal-400";
+  if (club.includes("Galactic")) return "bg-blue-600";
+  if (club.includes("Cosmic")) return "bg-indigo-600";
+  if (club.includes("Planet")) return "bg-amber-400";
+  if (club.includes("Cursed")) return "bg-red-800";
+  if (club.includes("Infinity")) return "bg-red-500 animate-pulse";
   return "bg-slate-400";
 }
 
@@ -481,8 +488,13 @@ function getClubBgColor(club: string) {
   if (club.includes("Step")) return "bg-orange-400/20 text-orange-400";
   if (club.includes("Lucky")) return "bg-indigo-400/20 text-indigo-400";
   if (club.includes("Nice")) return "bg-green-500/20 text-green-400 border border-green-500/50";
-  if (club.includes("Infinity")) return "bg-red-400/20 text-red-400";
   if (club.includes("Googol")) return "bg-cyan-400/20 text-cyan-400";
+  if (club.includes("Yotta")) return "bg-teal-400/20 text-teal-400";
+  if (club.includes("Galactic")) return "bg-blue-600/20 text-blue-400";
+  if (club.includes("Cosmic")) return "bg-indigo-600/20 text-indigo-400";
+  if (club.includes("Planet")) return "bg-amber-400/20 text-amber-400 border border-amber-400/50";
+  if (club.includes("Cursed")) return "bg-red-900/40 text-red-500 border border-red-700/50";
+  if (club.includes("Infinity")) return "bg-red-400/20 text-red-400";
   return "bg-slate-400/20 text-slate-400";
 }
 
@@ -491,6 +503,8 @@ function getClubIcon(club: string) {
   if (club.includes("Cube")) return <div className="w-6 h-6 border-2 border-current rounded-sm relative after:absolute after:top-[-4px] after:right-[-4px] after:w-full after:h-full after:border-2 after:border-current after:rounded-sm after:-z-10" />;
   if (club.includes("Prime")) return <Zap className="w-6 h-6" />;
   if (club.includes("Nice")) return <div className="text-xl font-black italic">69</div>;
+  if (club.includes("Planet")) return <div className="text-xl font-black italic">100</div>;
+  if (club.includes("Cursed")) return <X className="w-6 h-6" />;
   if (club.includes("Step")) return <div className="flex flex-col gap-0.5 items-end"><div className="w-1 h-1 bg-current" /><div className="w-2 h-1 bg-current" /><div className="w-3 h-1 bg-current" /></div>;
   return <Sparkles className="w-6 h-6" />;
 }
@@ -509,6 +523,11 @@ function getClubDescription(club: string) {
     case "Giant Club": return "Numbers that have reached massive proportions.";
     case "Titan Club": return "Numbers so large they challenge the imagination!";
     case "Universal Club": return "Truly astronomical. Reaching towards infinity!";
+    case "Yotta Club": return "Entering the Yottascale. Exa, Zetta, Yotta!";
+    case "Galactic Club": return "Large as the number of stars in a galaxy.";
+    case "Cosmic Club": return "Approaching the number of atoms in the known universe.";
+    case "Planet 100": return "A legendary realm in the Heroes With Zeroes saga.";
+    case "Cursed Fifteen": return "A number that shouldn't exist. There's something wrong with this fifteen...";
     case "Googol Club": return "The famous Googol. 1 with 100 zeros!";
     case "Googolplexian Club": return "Surpassing logical limits. Beyond 10^308.";
     case "Multiversal Club": return "Large enough to describe the states of multiple universes.";

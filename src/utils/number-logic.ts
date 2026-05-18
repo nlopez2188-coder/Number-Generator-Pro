@@ -29,6 +29,9 @@ export function getClubs(nValue: number | string | Decimal): string[] {
     
     // Nice Club
     if (num === 69) clubs.push("Nice Club");
+    
+    // Tweak -15
+    if (num === 15 && n.isNegative()) clubs.push("Cursed Fifteen");
 
     if (num % 2 === 0) clubs.push("Even Club");
     else clubs.push("Odd Club");
@@ -65,15 +68,42 @@ export function getClubs(nValue: number | string | Decimal): string[] {
   }
   
   // Super large scale
-  if (absN.gte('1e3003')) clubs.push("Infinity Bound");
+  const exponent = absN.e;
+  if (exponent >= 19 && exponent <= 21) clubs.push("Planet 100");
+
+  if (absN.gte('1e99999')) clubs.push("Infinity Bound");
   else if (absN.gte('1e1000')) clubs.push("Multiversal Club");
   else if (absN.gte('1e308')) clubs.push("Googolplexian Club");
   else if (absN.gte('1e100')) clubs.push("Googol Club");
+  else if (absN.gte('1e81')) clubs.push("Cosmic Club");
+  else if (absN.gte('1e50')) clubs.push("Galactic Club");
+  else if (absN.gte('1e24')) clubs.push("Yotta Club");
   else if (absN.gte('1e12')) clubs.push("Universal Club");
   else if (absN.gte('1e9')) clubs.push("Titan Club");
   else if (absN.gte('1e6')) clubs.push("Giant Club");
 
   return clubs;
+}
+
+export function formatForSpeech(n: Decimal): string {
+  if (n.isZero()) return "Zero";
+  
+  const absN = n.abs();
+  const prefix = n.isNegative() ? "Negative " : "";
+  
+  if (absN.lt(1e12)) {
+    return prefix + absN.toNumber().toLocaleString();
+  }
+  
+  if (absN.gte('1e99999')) return prefix + "Infinity Bound";
+  
+  const exponent = absN.e;
+  const mantissa = absN.div(new Decimal(10).pow(exponent)).toSignificantDigits(3).toString();
+  
+  if (exponent === 100) return prefix + "One Googol";
+  if (exponent === 3000) return prefix + "One Millinillion";
+
+  return `${prefix} ${mantissa} times ten to the power of ${exponent}`;
 }
 
 function isPrime(n: number): boolean {
@@ -123,9 +153,17 @@ export function getNumberInfo(nValue: number | string | Decimal): NumberFact {
   if (clubs.includes("Nice Club")) {
     description += `Nice. `;
   }
+
+  if (n.equals(-15)) {
+    description += `The Cursed Fifteen. A value of mysterious dread in the lab. `;
+  }
+  
+  if (clubs.includes("Planet 100")) {
+    description += `You've reached Planet 100! A legendary zone of Heroes With Zeroes. `;
+  }
   
   if (clubs.includes("Infinity Bound")) {
-    description += `Warning: This value is approaching the theoretical event horizon of our laboratory (10^3003)! `;
+    description += `Warning: This value is approaching the absolute theoretical event horizon of our laboratory (10^99999)! `;
   } else if (clubs.includes("Googol Club")) {
     description += `You've reached a Googol! This is more than the number of atoms in the observable universe. `;
   }
