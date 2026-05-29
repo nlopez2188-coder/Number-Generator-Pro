@@ -3,13 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Decimal from 'decimal.js';
 import { 
   Menu, 
   ChevronLeft, 
   ChevronRight, 
+  ChevronUp,
+  ChevronDown,
   Volume2, 
   RotateCcw, 
   Info, 
@@ -36,6 +38,20 @@ export default function App() {
   const [autoCountAmount, setAutoCountAmount] = useState(new Decimal(1));
   const [isExponentialMode, setIsExponentialMode] = useState(false);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollUp = useCallback(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ top: -200, behavior: 'smooth' });
+    }
+  }, []);
+
+  const scrollDown = useCallback(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ top: 200, behavior: 'smooth' });
+    }
+  }, []);
+
   const audioRef = useCallback((node: HTMLAudioElement) => {
     if (node) {
       node.volume = 0.2;
@@ -409,7 +425,10 @@ export default function App() {
               </div>
 
               {/* Dynamic Content */}
-              <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
+              <div 
+                ref={scrollContainerRef}
+                className="flex-1 p-8 overflow-y-auto custom-scrollbar relative"
+              >
                 <AnimatePresence mode="wait">
                   {activeTab === 'controls' && (
                     <motion.div 
@@ -520,6 +539,26 @@ export default function App() {
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* Floating Up/Down Scroll Buttons */}
+              {activeTab === 'controls' && (
+                <div className="absolute right-6 bottom-[115px] flex flex-col gap-2 z-50">
+                  <button 
+                    onClick={scrollUp}
+                    className="w-10 h-10 bg-slate-800/90 border border-slate-700/50 hover:bg-slate-700 hover:border-green-500/50 rounded-full flex items-center justify-center text-slate-300 hover:text-green-400 active:scale-95 transition-all shadow-lg hover:shadow-green-550/10"
+                    title="Scroll Up"
+                  >
+                    <ChevronUp className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={scrollDown}
+                    className="w-10 h-10 bg-slate-800/90 border border-slate-700/50 hover:bg-slate-700 hover:border-green-500/50 rounded-full flex items-center justify-center text-slate-300 hover:text-green-400 active:scale-95 transition-all shadow-lg hover:shadow-green-550/10"
+                    title="Scroll Down"
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
 
               <div className="p-8 pt-0 border-t border-slate-700/30">
                 <button 
