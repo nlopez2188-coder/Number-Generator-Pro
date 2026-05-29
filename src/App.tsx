@@ -30,7 +30,6 @@ export default function App() {
   const [number, setNumber] = useState(new Decimal(0));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'controls' | 'clubs' | 'info'>('controls');
-  const [page, setPage] = useState(0);
   const [showClubs, setShowClubs] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [isAutoCounting, setIsAutoCounting] = useState(false);
@@ -52,7 +51,7 @@ export default function App() {
       interval = setInterval(() => {
         setNumber(prev => {
           const next = prev.add(autoCountAmount);
-          const limit = isExponentialMode ? new Decimal('1e99999') : new Decimal('1e12');
+          const limit = isExponentialMode ? new Decimal('1e3000003') : new Decimal('1e12');
           if (next.abs().gt(limit)) {
             setIsAutoCounting(false);
             return prev;
@@ -93,7 +92,7 @@ export default function App() {
   const changeNumber = (delta: number | Decimal | string) => {
     setNumber(prev => {
       const next = prev.add(delta);
-      const limit = isExponentialMode ? new Decimal('1e99999') : new Decimal('1e12');
+      const limit = isExponentialMode ? new Decimal('1e3000003') : new Decimal('1e12');
       if (next.abs().gt(limit)) {
         if (!isExponentialMode) alert("Please enable EXP mode to reach higher powers!");
         return prev;
@@ -103,12 +102,12 @@ export default function App() {
   };
 
   const setManualNumber = () => {
-    const limitStr = isExponentialMode ? "1e99999" : "1,000,000,000,000";
+    const limitStr = isExponentialMode ? "1e3000003" : "1,000,000,000,000";
     const val = prompt(`Enter a number (up to ${limitStr}):`);
     if (val !== null) {
       try {
         const n = new Decimal(val.replace(/,/g, ''));
-        const limit = isExponentialMode ? new Decimal('1e99999') : new Decimal('1e12');
+        const limit = isExponentialMode ? new Decimal('1e3000003') : new Decimal('1e12');
         if (n.abs().lte(limit)) {
           setNumber(n);
         } else {
@@ -128,6 +127,50 @@ export default function App() {
         changeNumber(n);
       } catch (e) {
         alert("Invalid laboratory input!");
+      }
+    }
+  };
+
+  const customMultiply = () => {
+    const val = prompt("Enter precise multiplier (up to thousandths, e.g. 1.001, 1.5, or 10):");
+    if (val !== null) {
+      try {
+        const factor = new Decimal(val.replace(/,/g, ''));
+        setNumber(prev => {
+          const next = prev.mul(factor);
+          const limit = isExponentialMode ? new Decimal('1e3000003') : new Decimal('1e12');
+          if (next.abs().gt(limit)) {
+            alert(`Value exceeds the ${isExponentialMode ? 'Laboratory' : 'Standard'} limit!`);
+            return prev;
+          }
+          return next;
+        });
+      } catch (e) {
+        alert("Invalid multiplier input!");
+      }
+    }
+  };
+
+  const customDivide = () => {
+    const val = prompt("Enter precise divisor (up to thousandths, e.g. 1.001, 1.5, or 10):");
+    if (val !== null) {
+      try {
+        const factor = new Decimal(val.replace(/,/g, ''));
+        if (factor.isZero()) {
+          alert("Cannot divide by zero!");
+          return;
+        }
+        setNumber(prev => {
+          const next = prev.div(factor);
+          const limit = isExponentialMode ? new Decimal('1e3000003') : new Decimal('1e12');
+          if (next.abs().gt(limit)) {
+            alert(`Value exceeds the ${isExponentialMode ? 'Laboratory' : 'Standard'} limit!`);
+            return prev;
+          }
+          return next;
+        });
+      } catch (e) {
+        alert("Invalid divisor input!");
       }
     }
   };
@@ -152,39 +195,78 @@ export default function App() {
   const clubs = useMemo(() => getClubs(number), [number]);
   const info = useMemo(() => getNumberInfo(number), [number]);
 
-  // Pagination for buttons
-  const buttonPages = [
-    // Page 1: Lab Essentials
-    [
-      { label: "+1", val: 1 }, { label: "+10", val: 10 }, { label: "+100", val: 100 }, { label: "AUTO", action: toggleAuto, icon: <Zap className="w-4 h-4" />, status: isAutoCounting },
-      { label: "-1", val: -1 }, { label: "-10", val: -10 }, { label: "-100", val: -100 }, { label: "EXP", action: () => setIsExponentialMode(!isExponentialMode), icon: <Activity className="w-4 h-4" />, status: isExponentialMode },
-      { label: "x10", action: () => setNumber(prev => prev.mul(10)), icon: <TrendingUp className="w-4 h-4 text-orange-400" /> },
-      { label: "RESET", action: () => { setNumber(new Decimal(0)); setIsAutoCounting(false); }, icon: <RotateCcw className="w-4 h-4" /> },
-      { label: "MUSIC", action: () => setIsMusicPlaying(!isMusicPlaying), icon: <Volume2 className={`w-4 h-4 ${isMusicPlaying ? 'text-green-400 animate-pulse' : 'text-slate-400'}`} />, status: isMusicPlaying },
-      { label: "SAY", action: speakNumber, icon: <Volume2 className="w-4 h-4" /> },
-    ],
-    // Page 2: Power Lab
-    [
-      { label: "^2", action: () => setNumber(prev => prev.pow(2)), icon: <Zap className="w-4 h-4 text-yellow-400" /> },
-      { label: "SQRT", action: () => setNumber(prev => prev.sqrt()), icon: <Calculator className="w-4 h-4 text-cyan-400" /> },
-      { label: "x10^10", action: () => setNumber(prev => prev.mul('1e10')), icon: <Activity className="w-4 h-4 text-orange-500" /> },
-      { label: "x10^100", action: () => setNumber(prev => prev.mul('1e100')), icon: <Sparkles className="w-4 h-4" /> },
-      { label: "/10", action: () => setNumber(prev => prev.div(10)), icon: <TrendingDown className="w-4 h-4 text-blue-400" /> },
-      { label: "/10^10", action: () => setNumber(prev => prev.div('1e10')), icon: <TrendingDown className="w-4 h-4 text-blue-600" /> },
-      { label: "1/x", action: () => setNumber(prev => prev.isZero() ? prev : new Decimal(1).div(prev)), icon: <Calculator className="w-4 h-4" /> },
-      { label: "SET", action: setManualNumber, icon: <Target className="w-4 h-4" /> },
-    ],
-    // Page 3: Astronomical Constants
-    [
-      { label: "1M", val: 1000000 }, { label: "1B", val: 1000000000 }, { label: "1T", val: 1000000000000 }, { label: "P100", val: '1e20' },
-      { label: "1G", val: '1e100' }, { label: "1GP", val: '1e308' }, { label: "1INF", val: '1e1000' }, { label: "MAX", val: '1e99999' },
-      { label: "CLUBS", action: () => setShowClubs(!showClubs), icon: <GroupsIcon />, status: showClubs },
-      { label: "INFO", action: () => setShowInfo(!showInfo), icon: <Info className="w-4 h-4" />, status: showInfo },
-    ]
+  // Unified Tool Groups (All buttons scrollable on one page)
+  const toolGroups = [
+    {
+      title: "Lab Essentials",
+      buttons: [
+        { label: "+1", val: 1 },
+        { label: "+10", val: 10 },
+        { label: "+100", val: 100 },
+        { label: "+X", action: customIncrement, icon: <span className="text-xs font-bold flex items-center">+<span className="italic font-serif">X</span></span> },
+        { label: "-1", val: -1 },
+        { label: "-10", val: -10 },
+        { label: "-100", val: -100 },
+        { label: "SET", action: setManualNumber, icon: <Target className="w-4 h-4" /> },
+        { label: "AUTO", action: toggleAuto, icon: <Zap className="w-4 h-4" />, status: isAutoCounting },
+        { label: "EXP", action: () => setIsExponentialMode(!isExponentialMode), icon: <Activity className="w-4 h-4" />, status: isExponentialMode },
+        { label: "RESET", action: () => { setNumber(new Decimal(0)); setIsAutoCounting(false); }, icon: <RotateCcw className="w-4 h-4" /> },
+        { label: "SAY", action: speakNumber, icon: <Volume2 className="w-4 h-4" /> },
+        { label: "MUSIC", action: () => setIsMusicPlaying(!isMusicPlaying), icon: <Volume2 className={`w-4 h-4 ${isMusicPlaying ? 'text-green-400 animate-pulse' : 'text-slate-400'}`} />, status: isMusicPlaying },
+        { label: "CLUBS", action: () => setShowClubs(!showClubs), icon: <GroupsIcon />, status: showClubs },
+        { label: "INFO", action: () => setShowInfo(!showInfo), icon: <Info className="w-4 h-4" />, status: showInfo },
+      ]
+    },
+    {
+      title: "Multiplication & Division",
+      subtitle: "Includes Custom Thousandth-Precision Tools",
+      buttons: [
+        { label: "x2", action: () => setNumber(prev => prev.mul(2)), icon: <TrendingUp className="w-4 h-4 text-emerald-400" /> },
+        { label: "/2", action: () => setNumber(prev => prev.div(2)), icon: <TrendingDown className="w-4 h-4 text-emerald-600" /> },
+        { label: "x5", action: () => setNumber(prev => prev.mul(5)), icon: <TrendingUp className="w-4 h-4 text-teal-400" /> },
+        { label: "/5", action: () => setNumber(prev => prev.div(5)), icon: <TrendingDown className="w-4 h-4 text-teal-600" /> },
+        { label: "x10", action: () => setNumber(prev => prev.mul(10)), icon: <TrendingUp className="w-4 h-4 text-orange-400" /> },
+        { label: "/10", action: () => setNumber(prev => prev.div(10)), icon: <TrendingDown className="w-4 h-4 text-blue-400" /> },
+        { label: "x100", action: () => setNumber(prev => prev.mul(100)), icon: <TrendingUp className="w-4 h-4 text-orange-500" /> },
+        { label: "/100", action: () => setNumber(prev => prev.div(100)), icon: <TrendingDown className="w-4 h-4 text-blue-500" /> },
+        { label: "x10^10", action: () => setNumber(prev => prev.mul('1e10')), icon: <TrendingUp className="w-4 h-4 text-rose-500" /> },
+        { label: "/10^10", action: () => setNumber(prev => prev.div('1e10')), icon: <TrendingDown className="w-4 h-4 text-indigo-500" /> },
+        { label: "x10^100", action: () => setNumber(prev => prev.mul('1e100')), icon: <Sparkles className="w-4 h-4 text-yellow-400" /> },
+        { label: "1/x", action: () => setNumber(prev => prev.isZero() ? prev : new Decimal(1).div(prev)), icon: <Calculator className="w-4 h-4" /> },
+        { label: "^2", action: () => setNumber(prev => prev.pow(2)), icon: <Zap className="w-4 h-4 text-yellow-400" /> },
+        { label: "SQRT", action: () => setNumber(prev => prev.sqrt()), icon: <Calculator className="w-4 h-4 text-cyan-400" /> },
+        { label: "xPM", action: customMultiply, icon: <span className="text-[10px] font-bold text-green-400 hover:scale-105 transition-all">xPM</span> },
+        { label: "/PD", action: customDivide, icon: <span className="text-[10px] font-bold text-red-400 hover:scale-105 transition-all">/PD</span> },
+      ]
+    },
+    {
+      title: "Astronomical Scales",
+      buttons: [
+        { label: "1M", val: '1e6' },
+        { label: "1B", val: '1e9' },
+        { label: "1T", val: '1e12' },
+        { label: "P100", val: '1e20' },
+        { label: "1G", val: '1e100' },
+        { label: "1GP", val: '1e308' },
+        { label: "1INF", val: '1e1000' },
+        { label: "MAX", val: '1e3000003' },
+      ]
+    },
+    {
+      title: "Negative Scales",
+      subtitle: "The Dark Void Mirror",
+      buttons: [
+        { label: "-1M", val: '-1e6' },
+        { label: "-1B", val: '-1e9' },
+        { label: "-1T", val: '-1e12' },
+        { label: "-P100", val: '-1e20' },
+        { label: "-1G", val: '-1e100' },
+        { label: "-1GP", val: '-1e308' },
+        { label: "-1INF", val: '-1e1000' },
+        { label: "-MAX", val: '-1e3000003' },
+      ]
+    }
   ];
-
-  const nextPage = () => setPage((p) => (p + 1) % buttonPages.length);
-  const prevPage = () => setPage((p) => (p - 1 + buttonPages.length) % buttonPages.length);
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-white font-sans overflow-hidden flex flex-col selection:bg-green-500/30">
@@ -207,7 +289,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="font-bold text-xl tracking-tight">Number Generator</h1>
-            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.5.1: Elongation</p>
+            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.5.2: Sorted Extensions</p>
           </div>
         </div>
 
@@ -269,19 +351,19 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Floating Controls (Outside Menu for quick access) */}
+        {/* Floating Controls (Outside Menu with Extended Negatives Range) */}
         <div className="absolute bottom-12 w-full max-w-md px-8 flex items-center gap-4">
-          <TrendingDown className="text-slate-500 w-5 h-5 flex-shrink-0" />
+          <TrendingDown className="text-slate-500 w-5 h-5 flex-shrink-0 animate-pulse" />
           <input 
             type="range"
-            min="-9"
+            min="-1000000"
             max="1000000"
             step="1"
-            value={number.clamp(-9, 1000000).toNumber()}
+            value={number.clamp(-1000000, 1000000).toNumber()}
             onChange={(e) => setNumber(new Decimal(e.target.value))}
             className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-green-500"
           />
-          <TrendingUp className="text-slate-500 w-5 h-5 flex-shrink-0" />
+          <TrendingUp className="text-slate-500 w-5 h-5 flex-shrink-0 animate-pulse" />
         </div>
       </main>
 
@@ -290,7 +372,7 @@ export default function App() {
         {isMenuOpen && (
           <>
             <motion.div 
-              initial={{ opacity: 0 }}
+               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMenuOpen(false)}
@@ -305,8 +387,8 @@ export default function App() {
             >
               <div className="p-8 pb-4 flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Number Lab</h2>
-                <div className="text-xs font-mono text-slate-500 bg-slate-800 px-3 py-1 rounded-full">
-                  PAGE {page + 1}/{buttonPages.length}
+                <div className="text-xs font-mono text-green-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-705/30 uppercase tracking-wider font-bold">
+                  All Controls
                 </div>
               </div>
 
@@ -337,28 +419,43 @@ export default function App() {
                       exit={{ opacity: 0, x: -20 }}
                       className="space-y-6"
                     >
-                      <div className="grid grid-cols-4 gap-3">
-                        {buttonPages[page].map((btn, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => btn.action ? btn.action() : changeNumber(btn.val!)}
-                            className={`flex flex-col items-center justify-center p-4 rounded-2xl transition-all active:scale-90 aspect-square ${
-                              btn.status ? 'bg-green-500 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                            }`}
-                          >
-                            {btn.icon ? btn.icon : <span className="text-sm font-bold">{btn.label}</span>}
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-700/30 text-xs font-bold">
-                        <button onClick={prevPage} className="p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl flex-1 flex items-center justify-center gap-2 uppercase tracking-widest">
-                          <ChevronLeft className="w-4 h-4" /> Prev
-                        </button>
-                        <button onClick={nextPage} className="p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl flex-1 flex items-center justify-center gap-2 uppercase tracking-widest">
-                          Next <ChevronRight className="w-4 h-4" />
-                        </button>
-                      </div>
+                      {toolGroups.map((group, groupIdx) => (
+                        <div key={groupIdx} className="space-y-2">
+                          <div className="flex flex-col mb-1 select-none">
+                            <span className="text-[11px] font-black font-sans uppercase tracking-widest text-green-400/90 leading-none">
+                              {group.title}
+                            </span>
+                            {group.subtitle && (
+                              <span className="text-[10px] text-slate-400 italic mt-0.5">
+                                {group.subtitle}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="grid grid-cols-4 gap-2 bg-slate-800/20 p-2.5 rounded-2xl border border-slate-700/20">
+                            {group.buttons.map((btn, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => btn.action ? btn.action() : changeNumber(btn.val!)}
+                                className={`group/btn relative flex flex-col items-center justify-center p-3.5 rounded-xl transition-all active:scale-90 hover:scale-[1.03] shadow-md border ${
+                                  btn.status 
+                                    ? 'bg-green-500 border-green-400 text-slate-950 font-black shadow-green-500/20' 
+                                    : 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700/50 text-slate-100 hover:text-white'
+                                }`}
+                                title={btn.label}
+                              >
+                                {btn.icon ? (
+                                  <div className="flex items-center justify-center">
+                                    {btn.icon}
+                                  </div>
+                                ) : (
+                                  <span className="text-xs font-black tracking-tight">{btn.label}</span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </motion.div>
                   )}
 

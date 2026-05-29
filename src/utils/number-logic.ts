@@ -71,7 +71,7 @@ export function getClubs(nValue: number | string | Decimal): string[] {
   const exponent = absN.e;
   if (exponent >= 19 && exponent <= 21) clubs.push("Planet 100");
 
-  if (absN.gte('1e99999')) clubs.push("Infinity Bound");
+  if (absN.gte('1e3000003')) clubs.push("Infinity Bound");
   else if (absN.gte('1e1000')) clubs.push("Multiversal Club");
   else if (absN.gte('1e308')) clubs.push("Googolplexian Club");
   else if (absN.gte('1e100')) clubs.push("Googol Club");
@@ -95,7 +95,7 @@ export function formatForSpeech(n: Decimal): string {
     return prefix + absN.toNumber().toLocaleString();
   }
   
-  if (absN.gte('1e99999')) return prefix + "Infinity Bound";
+  if (absN.gte('1e3000003')) return prefix + "Infinity Bound";
   
   const exponent = absN.e;
   const mantissa = absN.div(new Decimal(10).pow(exponent)).toSignificantDigits(3).toString();
@@ -163,7 +163,7 @@ export function getNumberInfo(nValue: number | string | Decimal): NumberFact {
   }
   
   if (clubs.includes("Infinity Bound")) {
-    description += `Warning: This value is approaching the absolute theoretical event horizon of our laboratory (10^99999)! `;
+    description += `Warning: This value is approaching the absolute theoretical event horizon of our laboratory (10^3000003)! `;
   } else if (clubs.includes("Googol Club")) {
     description += `You've reached a Googol! This is more than the number of atoms in the observable universe. `;
   }
