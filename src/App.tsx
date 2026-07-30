@@ -24,7 +24,8 @@ import {
   TrendingDown,
   Hash,
   Activity,
-  Calculator
+  Calculator,
+  Video
 } from 'lucide-react';
 import { getClubs, getNumberInfo, formatDecimal, formatForSpeech } from './utils/number-logic';
 
@@ -38,6 +39,7 @@ export default function App() {
   const [autoCountAmount, setAutoCountAmount] = useState(new Decimal(1));
   const [isExponentialMode, setIsExponentialMode] = useState(false);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [isGreenScreen, setIsGreenScreen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollUp = useCallback(() => {
@@ -229,6 +231,7 @@ export default function App() {
         { label: "RESET", action: () => { setNumber(new Decimal(0)); setIsAutoCounting(false); }, icon: <RotateCcw className="w-4 h-4" /> },
         { label: "SAY", action: speakNumber, icon: <Volume2 className="w-4 h-4" /> },
         { label: "MUSIC", action: () => setIsMusicPlaying(!isMusicPlaying), icon: <Volume2 className={`w-4 h-4 ${isMusicPlaying ? 'text-green-400 animate-pulse' : 'text-slate-400'}`} />, status: isMusicPlaying },
+        { label: "GREEN", action: () => setIsGreenScreen(prev => !prev), icon: <Video className="w-4 h-4" />, status: isGreenScreen },
         { label: "CLUBS", action: () => setShowClubs(!showClubs), icon: <GroupsIcon />, status: showClubs },
         { label: "INFO", action: () => setShowInfo(!showInfo), icon: <Info className="w-4 h-4" />, status: showInfo },
       ]
@@ -285,17 +288,19 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-white font-sans overflow-hidden flex flex-col selection:bg-green-500/30">
+    <div className={`min-h-screen ${isGreenScreen ? 'bg-[#00FF00] text-slate-950' : 'bg-[#0F172A] text-white'} font-sans overflow-hidden flex flex-col transition-colors duration-300 selection:bg-green-500/30`}>
       {/* Background Ambience */}
       <audio 
         ref={audioRef}
         src="https://assets.mixkit.co/music/preview/mixkit-ethereal-fairy-dust-645.mp3" 
         loop 
       />
-      <div className="fixed inset-0 pointer-events-none opacity-30">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-500 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500 rounded-full blur-[120px]" />
-      </div>
+      {!isGreenScreen && (
+        <div className="fixed inset-0 pointer-events-none opacity-30">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-500 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500 rounded-full blur-[120px]" />
+        </div>
+      )}
 
       {/* Header */}
       <header className="relative z-20 flex items-center justify-between p-6">
@@ -304,14 +309,18 @@ export default function App() {
             <Hash className="text-white w-6 h-6" />
           </div>
           <div>
-            <h1 className="font-bold text-xl tracking-tight">Number Generator</h1>
-            <p className="text-xs text-slate-400 font-mono uppercase tracking-widest">Version 1.5.2: Sorted Extensions</p>
+            <h1 className={`font-bold text-xl tracking-tight ${isGreenScreen ? 'text-slate-950' : 'text-white'}`}>Number Generator</h1>
+            <p className={`text-xs font-mono uppercase tracking-widest ${isGreenScreen ? 'text-slate-900/80 font-bold' : 'text-slate-400'}`}>Version 1.5.2a: Green Screen Edition</p>
           </div>
         </div>
 
         <button 
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="group relative flex items-center justify-center w-12 h-12 bg-slate-800 rounded-2xl hover:bg-slate-700 transition-all active:scale-95 z-50 border border-slate-700/50"
+          className={`group relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all active:scale-95 z-50 border ${
+            isGreenScreen 
+              ? 'bg-slate-900 text-white border-slate-800 hover:bg-slate-800' 
+              : 'bg-slate-800 text-white hover:bg-slate-700 border-slate-700/50'
+          }`}
         >
           <div className="space-y-1.5">
             <div className={`w-6 h-1 bg-green-400 rounded-full transition-transform ${isMenuOpen ? 'rotate-45 translate-y-2.5' : ''}`} />
@@ -323,26 +332,34 @@ export default function App() {
 
       {/* Main Display */}
       <main className="flex-1 relative flex flex-col items-center justify-center p-8">
-        {/* Watermark */}
-        <div className="absolute bottom-6 right-6 opacity-10 pointer-events-none select-none z-0">
-          <span className="text-6xl font-black italic tracking-tighter uppercase">Number Lab</span>
+        {/* Moved Watermark */}
+        <div className={`absolute top-20 left-8 md:left-12 pointer-events-none select-none z-10 transition-opacity ${isGreenScreen ? 'opacity-25 text-slate-950' : 'opacity-15 text-white'}`}>
+          <div className="flex flex-col">
+            <span className="text-3xl md:text-5xl font-black italic tracking-tighter uppercase leading-none">Number Lab</span>
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold opacity-80 pl-0.5">V1.5.2a • Chroma Stage</span>
+          </div>
         </div>
+
         <AnimatePresence mode="wait">
           <motion.div 
-            key={number}
+            key={number.toString()}
             initial={{ scale: 0.8, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 1.1, opacity: 0, y: -20 }}
             className="flex flex-col items-center"
           >
             <div className="relative">
-              <span className={`font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-slate-500 drop-shadow-2xl transition-all ${isExponentialMode || number.abs().gte(1e9) ? 'text-[8vw]' : 'text-[12vw]'}`}>
+              <span className={`font-black tracking-tighter transition-all ${
+                isGreenScreen 
+                  ? 'text-slate-950 drop-shadow-[0_6px_20px_rgba(0,0,0,0.35)]' 
+                  : 'text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-slate-500 drop-shadow-2xl'
+              } ${isExponentialMode || number.abs().gte(1e9) ? 'text-[8vw]' : 'text-[12vw]'}`}>
                 {isExponentialMode ? number.toExponential(4) : formatDecimal(number)}
               </span>
               
               {/* Number decorations based on clubs */}
               {clubs.includes("Square Club") && (
-                <div className="absolute -inset-4 border-2 border-green-500/30 rounded-lg animate-pulse" />
+                <div className={`absolute -inset-4 border-2 rounded-lg animate-pulse ${isGreenScreen ? 'border-slate-950/50' : 'border-green-500/30'}`} />
               )}
               {clubs.includes("Prime Club") && (
                 <Sparkles className="absolute -top-12 -right-12 w-12 h-12 text-yellow-400 animate-bounce" />
@@ -357,7 +374,11 @@ export default function App() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: idx * 0.05 }}
                   key={club} 
-                  className="px-4 py-1.5 rounded-full bg-slate-800/80 border border-slate-700/50 text-xs font-medium text-slate-300 backdrop-blur-md flex items-center gap-2"
+                  className={`px-4 py-1.5 rounded-full border text-xs font-medium backdrop-blur-md flex items-center gap-2 ${
+                    isGreenScreen 
+                      ? 'bg-slate-900/90 border-slate-800 text-slate-100' 
+                      : 'bg-slate-800/80 border-slate-700/50 text-slate-300'
+                  }`}
                 >
                   <div className={`w-2 h-2 rounded-full ${getClubColor(club)}`} />
                   {club}
@@ -369,7 +390,7 @@ export default function App() {
 
         {/* Floating Controls (Outside Menu with Extended Negatives Range) */}
         <div className="absolute bottom-12 w-full max-w-md px-8 flex items-center gap-4">
-          <TrendingDown className="text-slate-500 w-5 h-5 flex-shrink-0 animate-pulse" />
+          <TrendingDown className={`w-5 h-5 flex-shrink-0 animate-pulse ${isGreenScreen ? 'text-slate-900' : 'text-slate-500'}`} />
           <input 
             type="range"
             min="-1000000"
@@ -377,9 +398,9 @@ export default function App() {
             step="1"
             value={number.clamp(-1000000, 1000000).toNumber()}
             onChange={(e) => setNumber(new Decimal(e.target.value))}
-            className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-green-500"
+            className={`w-full h-2 rounded-lg appearance-none cursor-pointer accent-green-500 ${isGreenScreen ? 'bg-slate-900/40' : 'bg-slate-800'}`}
           />
-          <TrendingUp className="text-slate-500 w-5 h-5 flex-shrink-0 animate-pulse" />
+          <TrendingUp className={`w-5 h-5 flex-shrink-0 animate-pulse ${isGreenScreen ? 'text-slate-900' : 'text-slate-500'}`} />
         </div>
       </main>
 

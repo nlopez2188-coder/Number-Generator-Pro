@@ -1,6 +1,6 @@
 {
-  "name": "Number Generator Pro: Elongation",
-  "description": "V1.5.1 - Elongation: Advanced number lab with limits up to 10^99999, high-precision increments, Planet 100 features, and expanded auto-count modes.",
+  "name": "Number Generator Pro: Green Screen Edition",
+  "description": "V1.5.2a - Adds green screen mode for clean chroma-keying and moves the watermark to the top left.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "voice-synthesis",
