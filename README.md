@@ -1,0 +1,9 @@
+Buttons:
+[GREEN SCREEN]
+[EXP]
+[SAY NUMBER]
+[INFO]
+[CLUBS]
+[AUTO]
+[SET]
+[RESET]
